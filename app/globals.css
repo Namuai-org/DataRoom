@@ -1,0 +1,319 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   Namu design tokens
+   Transcribed from the brand board. Light space first, then dark structure,
+   then small moments of heat.
+   ========================================================================== */
+
+@theme {
+  /* Core palette */
+  --color-harmattan: #f7f0e3;
+  --color-dry-clay: #edd9b0;
+  --color-sahel: #e8935a;
+  --color-kola: #6b3e1e;
+  --color-forest: #1a3a2e;
+  --color-ink: #1c1410;
+
+  /* Tints derived from the core palette, for surfaces and dividers */
+  --color-harmattan-50: #fdfaf4;
+  --color-harmattan-100: #faf5ec;
+  --color-harmattan-200: #f7f0e3;
+  --color-harmattan-300: #f1e7d5;
+  --color-ink-900: #1c1410;
+  --color-ink-800: #2a201a;
+  --color-ink-700: #3b2e25;
+  --color-ink-600: #55443a;
+  --color-ink-500: #6f5c50;
+  --color-ink-400: #8f7d71;
+  --color-ink-300: #b3a396;
+  --color-sahel-soft: #f2b98d;
+  --color-sahel-deep: #d17b40;
+
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* A calm, slightly slow easing — the brand voice is patient, not snappy. */
+  --ease-namu: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --radius-card: 14px;
+}
+
+/* ==========================================================================
+   Semantic surface variables, themed
+   ========================================================================== */
+
+:root {
+  --surface: var(--color-harmattan-200);
+  --surface-raised: #fffdf8;
+  --surface-sunken: var(--color-harmattan-300);
+  --border-subtle: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --border-strong: color-mix(in oklab, var(--color-ink) 22%, transparent);
+  --text-primary: var(--color-ink-900);
+  --text-secondary: var(--color-ink-600);
+  --text-muted: var(--color-ink-400);
+  --accent: var(--color-sahel);
+  --shadow-card: 0 1px 2px rgb(28 20 16 / 0.04), 0 8px 24px -12px rgb(28 20 16 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(28 20 16 / 0.05), 0 18px 44px -18px rgb(28 20 16 / 0.22);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --surface: var(--color-ink-900);
+  --surface-raised: #241b15;
+  --surface-sunken: #150f0c;
+  --border-subtle: color-mix(in oklab, var(--color-harmattan) 12%, transparent);
+  --border-strong: color-mix(in oklab, var(--color-harmattan) 24%, transparent);
+  --text-primary: var(--color-harmattan-200);
+  --text-secondary: color-mix(in oklab, var(--color-harmattan) 72%, transparent);
+  --text-muted: color-mix(in oklab, var(--color-harmattan) 48%, transparent);
+  --accent: var(--color-sahel);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 18px 44px -18px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+* {
+  border-color: var(--border-subtle);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: 'kern' 1, 'liga' 1, 'cv11' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.4s var(--ease-namu), color 0.4s var(--ease-namu);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-sahel) 30%, transparent);
+  color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sahel);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Scrollbars, tuned to the surface rather than the OS default */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--text-muted) 40%, transparent);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--text-muted) 70%, transparent);
+  background-clip: content-box;
+}
+
+/* ==========================================================================
+   Typography utilities
+   ========================================================================== */
+
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+/* Label / 10pt in the brand board's type scale */
+.label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Tabular figures keep analytics columns from jittering as numbers change. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+
+.namu-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow 0.35s var(--ease-namu),
+    border-color 0.35s var(--ease-namu),
+    transform 0.35s var(--ease-namu);
+}
+
+.namu-card-interactive:hover {
+  box-shadow: var(--shadow-lift);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+/* The Sahel dot — the brand's one moment of heat. Used to mark a single
+   focal point per view, never as decoration. */
+.sahel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-sahel);
+  flex: none;
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    var(--border-subtle),
+    var(--border-subtle) 60%,
+    transparent
+  );
+}
+
+/* ==========================================================================
+   Motion
+   ========================================================================== */
+
+@keyframes namu-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes namu-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes namu-draw {
+  from {
+    stroke-dashoffset: var(--dash, 300);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes namu-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-fade-up {
+  animation: namu-fade-up 0.7s var(--ease-namu) both;
+}
+
+.animate-fade {
+  animation: namu-fade 0.5s var(--ease-namu) both;
+}
+
+/* Staggered reveal for lists and grids */
+.stagger > * {
+  animation: namu-fade-up 0.6s var(--ease-namu) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger > *:nth-child(5) { animation-delay: 0.15s; }
+.stagger > *:nth-child(6) { animation-delay: 0.18s; }
+.stagger > *:nth-child(7) { animation-delay: 0.21s; }
+.stagger > *:nth-child(8) { animation-delay: 0.24s; }
+.stagger > *:nth-child(9) { animation-delay: 0.27s; }
+.stagger > *:nth-child(10) { animation-delay: 0.30s; }
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--surface-raised) 60%, transparent),
+    transparent
+  );
+  animation: namu-shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Document protection
+   ========================================================================== */
+
+/* Printing a watermarked view should not produce a clean copy. */
+@media print {
+  body.protected-view * {
+    visibility: hidden !important;
+  }
+  body.protected-view::after {
+    content: 'This document is confidential. Printing is disabled.';
+    visibility: visible !important;
+    display: block;
+    position: fixed;
+    inset: 0;
+    padding: 4rem;
+    font-family: var(--font-sans);
+    font-size: 14pt;
+    color: #000;
+  }
+}
+
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

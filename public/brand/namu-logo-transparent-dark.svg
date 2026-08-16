@@ -1,0 +1,13 @@
+<svg width="360" height="130" viewBox="0 0 360 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wg_transparent-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E8935A"/>
+      <stop offset="22%" stop-color="#1C1410"/>
+      <stop offset="100%" stop-color="#1C1410"/>
+    </linearGradient>
+  </defs>
+  
+  <path d="M 104 65 A 44 44 0 1 0 60 109" stroke="#1C1410" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <circle cx="60" cy="109" r="6" fill="#E8935A"/>
+  <text x="76" y="99" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="400" fill="url(#wg_transparent-dark)" letter-spacing="2" dominant-baseline="central">namu</text>
+</svg>
