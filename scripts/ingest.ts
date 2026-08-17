@@ -265,13 +265,14 @@ async function processFile(
   const buffer = await readFile(file.absolutePath)
   const { put, del } = await import('@vercel/blob')
 
-  // access: 'public' is the only mode Vercel Blob offers, but the bytes are
-  // still gated: the app never returns blobUrl to a browser and streams every
-  // document through an authorised route instead. addRandomSuffix adds an
-  // unguessable segment to the pathname, so even someone who learns the folder
-  // and file name cannot construct the URL and bypass that route.
+  // Private access: the bytes cannot be read from storage without the store
+  // token, so even a leaked blob URL is inert. The app reads them server-side
+  // with get() and streams every document through an authorised route, which is
+  // the only path to a browser. addRandomSuffix keeps the pathname unguessable
+  // on top of that — belt and braces, since a private store already refuses
+  // anonymous reads.
   const uploaded = await put(file.blobPath, buffer, {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: true,
     contentType: file.mimeType,
   })

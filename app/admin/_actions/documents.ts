@@ -147,13 +147,12 @@ export async function uploadDocuments(
       const kind = detectKind(file.name, mimeType)
       const pathname = `documents/${folder.slug}/${safePathSegment(file.name)}`
 
-      // access: 'public' with a random suffix. The pathname is unguessable and
-      // is never handed to the browser — documents are streamed through an
-      // authorised route that checks the visitor's link first. A private blob
-      // would also work but would require every reader of `blobUrl` to hold the
-      // store token, which is a wider contract than this table implies.
+      // Private, with a random suffix on top. A private blob cannot be read
+      // from storage without the store token, so a leaked URL is inert; the
+      // room reads the bytes server-side and streams them through an authorised
+      // route that checks the visitor's link first.
       const blob = await put(pathname, bytes, {
-        access: 'public',
+        access: 'private',
         addRandomSuffix: true,
         contentType: mimeType,
         token: process.env.BLOB_READ_WRITE_TOKEN,

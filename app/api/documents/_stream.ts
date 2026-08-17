@@ -1,4 +1,5 @@
 import 'server-only'
+import { get } from '@vercel/blob'
 import { NO_STORE, contentDisposition, safeContentType } from './_resolve'
 import type { Document } from '@/lib/db/schema'
 
@@ -60,17 +61,43 @@ export class UpstreamError extends Error {
   }
 }
 
-async function fetchUpstream(url: string, range?: string): Promise<Response> {
-  const response = await fetch(url, {
-    cache: 'no-store',
-    // Never forward the visitor's cookies to storage; this request is ours.
-    headers: range ? { Range: range } : undefined,
-    redirect: 'follow',
+/**
+ * Reads the blob with the store token.
+ *
+ * The store is private, so its URLs are inert without authentication — a leaked
+ * blobUrl reads nothing. That makes `get()` the only way in, and it is also the
+ * better shape: it takes the stored pathname, attaches the authorization header
+ * itself, and hands back a stream we never buffer.
+ *
+ * The Range header is passed straight through, because pdf.js asks for the
+ * first and last few kilobytes of a PDF to read its cross-reference table
+ * before it will draw anything.
+ */
+async function fetchUpstream(doc: Document, range?: string): Promise<Response> {
+  const result = await get(doc.blobPath, {
+    access: 'private',
+    ...(range ? { headers: { Range: range } } : {}),
   })
-  if (!response.ok && response.status !== 206) {
-    throw new UpstreamError(response.status)
+
+  if (!result) throw new UpstreamError(404)
+  if (result.statusCode === 304 || !result.stream) throw new UpstreamError(304)
+
+  // `get()` types its result as 200, but a ranged read really does come back
+  // partial; the presence of Content-Range is what says so.
+  const contentRange = result.headers.get('content-range')
+  const headers = new Headers()
+  if (contentRange) headers.set('content-range', contentRange)
+
+  const length = result.headers.get('content-length')
+  if (length) headers.set('content-length', length)
+  else if (!contentRange && typeof result.blob.size === 'number') {
+    headers.set('content-length', String(result.blob.size))
   }
-  return response
+
+  return new Response(result.stream, {
+    status: contentRange ? 206 : 200,
+    headers,
+  })
 }
 
 export async function streamDocument(options: StreamOptions): Promise<Response> {
@@ -78,7 +105,7 @@ export async function streamDocument(options: StreamOptions): Promise<Response> 
   const requested = rangeHeader ? parseRange(rangeHeader) : null
 
   if (!requested) {
-    const upstream = await fetchUpstream(doc.blobUrl)
+    const upstream = await fetchUpstream(doc)
     const headers = baseHeaders(options)
     const length = upstream.headers.get('content-length')
 
@@ -96,7 +123,7 @@ export async function streamDocument(options: StreamOptions): Promise<Response> 
 
   // Prefer passing the range straight through — storage answers from its CDN
   // edge and we never hold the file in memory.
-  const upstream = await fetchUpstream(doc.blobUrl, rangeHeader ?? undefined)
+  const upstream = await fetchUpstream(doc, rangeHeader ?? undefined)
 
   if (upstream.status === 206) {
     const headers = baseHeaders(options)

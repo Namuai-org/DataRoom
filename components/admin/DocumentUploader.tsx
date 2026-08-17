@@ -86,7 +86,7 @@ export function DocumentUploader({ folders }: { folders: FolderOption[] }) {
           `documents/${safePathSegment(folderSlug)}/${safePathSegment(file.name)}`,
           file,
           {
-            access: 'public',
+            access: 'private',
             handleUploadUrl: '/api/blob/upload',
             clientPayload: JSON.stringify({ folderId, uploadedBy: 'admin' }),
             onUploadProgress: ({ percentage }) => {

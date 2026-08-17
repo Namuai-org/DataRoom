@@ -116,16 +116,41 @@ export function PdfViewer({ doc, watermark }: RendererProps) {
         const pdfjs = await loadPdfjs()
         if (cancelled) return
 
+        /*
+         * The bytes are fetched here rather than by pdf.js.
+         *
+         * Letting pdf.js own the transport looks tidier and cost two days: with
+         * `disableAutoFetch` it pulls page data lazily *during* rendering, and
+         * when one of those in-render fetches does not complete, `render()`
+         * never settles. The visible symptom is a page that paints its white
+         * background and then simply stops — no error, no rejected promise,
+         * nothing in the console. The document had already reported the right
+         * page count and a 3,831-operator display list, so everything upstream
+         * looked healthy.
+         *
+         * Reading the whole file once, through the same authorised route, makes
+         * the failure mode impossible: by the time pdf.js is involved the bytes
+         * are already in memory. The room caps uploads at 50 MB and every
+         * document is gated anyway, so there is no case where progressive
+         * fetching would have earned its complexity.
+         */
+        const response = await fetch(documentContentUrl(doc.id), {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        })
+        if (cancelled) return
+        if (!response.ok) {
+          throw Object.assign(new Error(`content route responded ${response.status}`), {
+            status: response.status,
+          })
+        }
+
+        const data = new Uint8Array(await readWithProgress(response, setLoadProgress))
+        if (cancelled) return
+
         loadingTask = pdfjs.getDocument({
-          // Same-origin request, so the visitor's session cookie rides along
-          // automatically — the bytes still pass the full authorisation check.
-          url: documentContentUrl(doc.id),
-          withCredentials: true,
+          data,
           ...PDFJS_ASSET_OPTIONS,
-          // Fetch page data on demand rather than pulling the whole file up
-          // front. This is what makes the content route's Range support pay off.
-          disableAutoFetch: true,
-          rangeChunkSize: 131_072,
           // Interactive XFA forms are not something an investor deck needs, and
           // they are the most exotic corner of the format.
           enableXfa: false,
@@ -138,10 +163,6 @@ export function PdfViewer({ doc, watermark }: RendererProps) {
           setStatus('password')
         }
 
-        loadingTask.onProgress = ({ loaded, total }: { loaded: number; total: number }) => {
-          if (cancelled || !total) return
-          setLoadProgress(Math.min(100, Math.round((loaded / total) * 100)))
-        }
 
         const document_ = await loadingTask.promise
         // The cleanup below already destroyed the loading task, which tears the
@@ -593,11 +614,10 @@ function PdfPage({
 
     let cancelled = false
     let task: RenderTask | null = null
-    let page: PDFPageProxy | null = null
 
     void (async () => {
       try {
-        page = await pdf.getPage(pageNumber)
+        const page = await pdf.getPage(pageNumber)
         if (cancelled) return
 
         const unscaled = page.getViewport({ scale: 1 })
@@ -643,11 +663,13 @@ function PdfPage({
       } catch {
         // Cancelling an already-settled task is not an error worth surfacing.
       }
-      try {
-        page?.cleanup()
-      } catch {
-        // The document may already be destroyed; nothing left to release.
-      }
+      // NOT page.cleanup(). getPage() hands back a *cached* proxy, so in React
+      // StrictMode — where every effect mounts, unmounts and mounts again — the
+      // first run's teardown would tear down the very page the second run is
+      // painting into. The symptom is silent: render() resolves, no error is
+      // thrown, and the canvas comes back a clean white sheet. The bitmap is
+      // still released when a page leaves the render window, by the effect
+      // below, which is the right place for it.
     }
   }, [pdf, pageNumber, renderScale, active])
 
@@ -858,6 +880,42 @@ function PasswordState({
 }
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Reads a response body to completion, reporting percentage as it goes so a
+ * 13 MB deck still shows a moving progress bar rather than a frozen spinner.
+ * Falls back to a plain buffer read when the server withheld Content-Length or
+ * the browser gave us no stream.
+ */
+async function readWithProgress(
+  response: Response,
+  onProgress: (percent: number | null) => void,
+): Promise<ArrayBuffer> {
+  const total = Number(response.headers.get('content-length') ?? '')
+  if (!response.body || !Number.isFinite(total) || total <= 0) {
+    return response.arrayBuffer()
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let received = 0
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    received += value.byteLength
+    onProgress(Math.min(100, Math.round((received / total) * 100)))
+  }
+
+  const out = new Uint8Array(received)
+  let offset = 0
+  for (const chunk of chunks) {
+    out.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return out.buffer
+}
 
 function useDebounced<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value)

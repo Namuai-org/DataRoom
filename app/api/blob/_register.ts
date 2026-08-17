@@ -1,4 +1,5 @@
 import 'server-only'
+import { get } from '@vercel/blob'
 import { and, eq, max } from 'drizzle-orm'
 import { db, documents, folders } from '@/lib/db'
 import { detectKind, mimeFromFileName, titleFromFileName } from '@/lib/utils'
@@ -60,9 +61,11 @@ export async function registerUploadedBlob(input: RegisterInput): Promise<Regist
   let sizeBytes = Math.max(0, Math.round(input.sizeBytes ?? 0))
   if (kind === 'pdf' || sizeBytes === 0) {
     try {
-      const response = await fetch(input.blobUrl)
-      if (response.ok) {
-        const buffer = Buffer.from(await response.arrayBuffer())
+      // The store is private, so the bytes come back through `get()` with the
+      // store token rather than a plain fetch of the URL, which would 401.
+      const result = await get(input.pathname, { access: 'private' })
+      if (result?.statusCode === 200 && result.stream) {
+        const buffer = Buffer.from(await new Response(result.stream).arrayBuffer())
         if (sizeBytes === 0) sizeBytes = buffer.byteLength
         if (kind === 'pdf') pageCount = bestEffortPdfPageCount(buffer)
       }

@@ -12,7 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "ingest": "tsx scripts/ingest.ts",
     "seed": "tsx scripts/seed.ts",
-    "check": "tsx scripts/check-setup.ts"
+    "check": "tsx scripts/check-setup.ts",
+    "reset": "tsx scripts/reset-room.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
