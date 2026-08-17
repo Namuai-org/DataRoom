@@ -115,6 +115,13 @@ export function SettingsForm({ settings }: { settings: RoomSettings }) {
           />
 
           <Toggle
+            name="showSealedCount"
+            label="Tell readers when a section holds material they cannot see yet"
+            hint="A narrowed link then reads “3 items are sealed at the confirmatory stage” at the foot of a section. Off by default — whether to advertise that is a commercial judgement."
+            defaultChecked={settings.showSealedCount}
+          />
+
+          <Toggle
             name="defaultCanDownload"
             label="New invites may download by default"
             hint="Only the default for the invite form — every link can be changed afterwards, and a document’s own policy overrides it in both directions."

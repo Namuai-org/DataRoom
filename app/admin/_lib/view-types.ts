@@ -23,6 +23,12 @@ export type RoomSettings = {
   alertEmail: string
   /** The in-room question and document-request thread. */
   qaEnabled: boolean
+  /**
+   * Whether a section tells a reader that material exists above their
+   * disclosure stage. Off by default — advertising sealed items is a
+   * commercial judgement, not a default.
+   */
+  showSealedCount: boolean
 }
 
 export type AccessLinkView = {

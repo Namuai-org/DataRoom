@@ -1,15 +1,16 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { requireVisitor } from '@/lib/auth'
-import { searchDocuments } from '@/lib/room'
+import { requireVisitor, canDownload } from '@/lib/auth'
+import { searchDocuments, getVisitorProgress, getVisibleFolders } from '@/lib/room'
 import { recordEvent } from '@/lib/analytics'
-import { displayFolderName } from '@/lib/brand'
-import { formatBytes } from '@/lib/utils'
-import { DocumentIcon, kindLabel } from '@/components/room/DocumentIcon'
+import { displayFolderName, folderIndex, brand } from '@/lib/brand'
+import { Colophon } from '@/components/room/Colophon'
+import { Register, buildEntries, chooseRailUnit } from '@/components/room/Register'
 
 export const dynamic = 'force-dynamic'
 
+/** Results, set in the same register as a section, with the source section as a kicker. */
 export default async function SearchPage({
   searchParams,
 }: {
@@ -20,11 +21,16 @@ export default async function SearchPage({
   if (!auth) redirect('/access-denied?reason=expired')
 
   const query = (q ?? '').trim()
-  const results = query ? await searchDocuments(auth.link, query) : []
+
+  const [results, progress, folders] = await Promise.all([
+    query ? searchDocuments(auth.link, query) : Promise.resolve([]),
+    getVisitorProgress(auth.visitor.id),
+    getVisibleFolders(auth.link),
+  ])
 
   if (query) {
-    // Search terms are worth keeping: they say what an investor came looking
-    // for, including the things the room does not yet answer.
+    // Search terms are worth keeping: they say what a reader came looking for,
+    // including the things the room does not yet answer.
     await recordEvent({
       type: 'search',
       sessionId: auth.session.sessionId,
@@ -34,75 +40,93 @@ export default async function SearchPage({
     })
   }
 
+  const folderBySlug = new Map(folders.map((f) => [f.slug, f]))
+
+  const entries = results.map((doc) => {
+    const folder = folderBySlug.get(doc.folderSlug)
+    const built = buildEntries({
+      documents: [doc],
+      sectionIndex: folderIndex(doc.folderName) ?? '00',
+      folderTier: folder?.tier ?? 'diligence',
+      folderSlug: doc.folderSlug,
+      progress,
+      canDownload: (d) => canDownload(auth.link, d),
+      kickerFor: () => displayFolderName(doc.folderName),
+    })[0]!
+    return { ...built, isNext: false }
+  })
+
   return (
-    <div className="mx-auto max-w-4xl px-5 pb-16 pt-10 sm:px-8 sm:pt-14">
-      <Link
-        href="/room"
-        className="mb-9 inline-flex items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--text-primary)]"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        <ChevronLeft size={14} />
-        All folders
-      </Link>
+    <div className="mx-auto max-w-6xl px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
+      <div className="max-w-[54rem]">
+        <Link href="/room" className="label inline-flex items-center gap-1 hover:text-[var(--text-primary)]">
+          <ChevronLeft size={13} aria-hidden />
+          Contents
+        </Link>
 
-      <h1 className="font-display text-[1.7rem] leading-tight" style={{ color: 'var(--text-primary)' }}>
-        {query ? <>Results for “{query}”</> : 'Search'}
-      </h1>
-      <p className="mt-2 text-sm tnum" style={{ color: 'var(--text-muted)' }}>
-        {query
-          ? `${results.length} ${results.length === 1 ? 'document' : 'documents'}`
-          : 'Type at least two characters in the search field above.'}
-      </p>
+        <header className="mt-8">
+          <div className="flex items-baseline gap-4">
+            <p className="label shrink-0">Search</p>
+            <span aria-hidden className="hairline flex-1" />
+          </div>
 
-      {query && results.length === 0 && (
-        <div className="namu-card mt-8 p-8 text-center" style={{ boxShadow: 'none' }}>
-          <p className="font-display text-lg" style={{ color: 'var(--text-primary)' }}>
-            Nothing matched
-          </p>
-          <p className="mx-auto mt-2 max-w-sm text-sm" style={{ color: 'var(--text-muted)' }}>
-            If you are looking for something that should be here, ask for it directly and we will
-            add it.
-          </p>
-          <Link
-            href="/room/questions"
-            className="mt-5 inline-block rounded-full px-4 py-2 text-[13px] font-medium"
-            style={{ background: 'var(--text-primary)', color: 'var(--surface)' }}
+          <h1
+            className="font-display mt-3 text-[clamp(1.75rem,3.6vw,2.5rem)] leading-[1.05] tracking-[-0.025em]"
+            style={{ color: 'var(--text-primary)' }}
           >
-            Request a document
-          </Link>
-        </div>
-      )}
+            {query ? <>“{query}”</> : 'Search the room'}
+          </h1>
 
-      {results.length > 0 && (
-        <ul className="stagger mt-8 flex flex-col gap-2">
-          {results.map((doc) => (
-            <li key={doc.id}>
-              <Link
-                href={`/room/${doc.folderSlug}/${doc.id}`}
-                className="namu-card namu-card-interactive flex items-start gap-4 p-4 sm:p-5"
+          <div className="rule-masthead mt-8" />
+        </header>
+
+        <Colophon
+          className="mt-3"
+          segments={[
+            query
+              ? `${results.length} ${results.length === 1 ? 'document' : 'documents'}`
+              : 'Type at least two characters',
+          ]}
+        />
+
+        {query && results.length === 0 ? (
+          <div className="mt-10">
+            <p className="font-display text-[1.25rem] italic" style={{ color: 'var(--text-primary)' }}>
+              Nothing matched.
+            </p>
+            <p
+              className="mt-2 max-w-[34rem] text-[0.9375rem] leading-relaxed"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              If you are looking for something that should be here, ask for it directly and we will
+              add it — or write to{' '}
+              <a
+                href={`mailto:${brand.contact}`}
+                className="underline decoration-1 underline-offset-[0.22em]"
+                style={{ textDecorationColor: 'var(--border-strong)' }}
               >
-                <span className="mt-0.5 flex-none" style={{ color: 'var(--text-muted)' }}>
-                  <DocumentIcon kind={doc.kind} size={18} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                    {doc.title}
-                  </h2>
-                  {doc.description && (
-                    <p className="mt-1.5 text-[13px]" style={{ color: 'var(--text-muted)' }}>
-                      {doc.description}
-                    </p>
-                  )}
-                  <p className="mt-2 text-[11.5px] tnum" style={{ color: 'var(--text-muted)' }}>
-                    {displayFolderName(doc.folderName)} · {kindLabel(doc.kind)}
-                    {doc.sizeBytes > 0 && ` · ${formatBytes(doc.sizeBytes)}`}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                {brand.contact}
+              </a>
+              .
+            </p>
+            <Link
+              href="/room/questions"
+              className="mt-5 inline-block px-4 py-2 text-[0.8125rem] font-medium"
+              style={{
+                background: 'var(--text-primary)',
+                color: 'var(--surface)',
+                borderRadius: 'var(--radius-sheet)',
+              }}
+            >
+              Request a document
+            </Link>
+          </div>
+        ) : results.length > 0 ? (
+          <div className="mt-10">
+            <Register entries={entries} railUnit={chooseRailUnit(results)} />
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

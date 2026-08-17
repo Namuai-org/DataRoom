@@ -37,6 +37,12 @@ export type VisibleFolder = {
   sortOrder: number
   tier: string
   documentCount: number
+  /**
+   * Ids of the documents this link may see inside the folder. The contents page
+   * intersects these with the reader's progress map to draw a per-section read
+   * mark, which is why no separate progress query exists.
+   */
+  documentIds: string[]
 }
 
 /** Folders this link may see, with a count of the documents it may see inside. */
@@ -52,6 +58,7 @@ export async function getVisibleFolders(link: AccessLink): Promise<VisibleFolder
 
   const docRows = await db
     .select({
+      id: documents.id,
       folderId: documents.folderId,
       tier: documents.tier,
       folderTier: folders.tier,
@@ -68,28 +75,39 @@ export async function getVisibleFolders(link: AccessLink): Promise<VisibleFolder
       ),
     )
 
-  const counts = new Map<string, number>()
+  const ids = new Map<string, string[]>()
   for (const doc of docRows) {
     if (!tierVisible(link.tier, resolveTier(doc, { tier: doc.folderTier }))) continue
-    counts.set(doc.folderId, (counts.get(doc.folderId) ?? 0) + 1)
+    const list = ids.get(doc.folderId)
+    if (list) list.push(doc.id)
+    else ids.set(doc.folderId, [doc.id])
   }
 
-  return permitted.map((f) => ({
-    id: f.id,
-    slug: f.slug,
-    name: f.name,
-    description: f.description,
-    sortOrder: f.sortOrder,
-    tier: f.tier,
-    documentCount: counts.get(f.id) ?? 0,
-  }))
+  return permitted.map((f) => {
+    const documentIds = ids.get(f.id) ?? []
+    return {
+      id: f.id,
+      slug: f.slug,
+      name: f.name,
+      description: f.description,
+      sortOrder: f.sortOrder,
+      tier: f.tier,
+      documentCount: documentIds.length,
+      documentIds,
+    }
+  })
 }
 
 /** One folder plus the documents inside it this link may see. */
 export async function getFolderWithDocuments(
   link: AccessLink,
   slug: string,
-): Promise<{ folder: VisibleFolder; documents: VisibleDocument[] } | null> {
+): Promise<{
+  folder: VisibleFolder
+  documents: VisibleDocument[]
+  /** Filed here but above this link's disclosure stage. */
+  withheldCount: number
+} | null> {
   const [folder] = await db.select().from(folders).where(eq(folders.slug, slug)).limit(1)
   if (!folder || folder.isHidden) return null
   if (!canSeeFolder(link, folder.id)) return null
@@ -113,8 +131,10 @@ export async function getFolderWithDocuments(
       sortOrder: folder.sortOrder,
       tier: folder.tier,
       documentCount: visible.length,
+      documentIds: visible.map((d) => d.id),
     },
     documents: visible,
+    withheldCount: docRows.length - visible.length,
   }
 }
 
@@ -145,7 +165,10 @@ export async function getDocumentForVisitor(
       description: row.folder.description,
       sortOrder: row.folder.sortOrder,
       tier: row.folder.tier,
+      // The caller only needs the folder for its name and slug here; counting
+      // its contents would be a second query for a number nothing reads.
       documentCount: 0,
+      documentIds: [],
     },
   }
 }

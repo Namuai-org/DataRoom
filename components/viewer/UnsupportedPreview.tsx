@@ -47,7 +47,12 @@ export function UnsupportedPreview({ doc, canDownload }: RendererProps) {
   const { reportProgress } = useDocumentTracking(doc.id, doc.pageCount ?? undefined)
 
   useEffect(() => {
-    reportProgress(1, 1)
+    // The page count is `null`, not 1. Passing 1 here made the completion maths
+    // LEAST(1.0, 1/1) — so every spreadsheet in the room recorded as fully read
+    // the instant it was clicked, and the console reported that back as
+    // engagement. A file with no pages has no completion to measure; time spent
+    // is the only honest signal for it, and the heartbeat still records that.
+    reportProgress(1, null)
   }, [reportProgress])
 
   const Icon = ICONS[doc.kind] ?? FileText

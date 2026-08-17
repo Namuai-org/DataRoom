@@ -742,7 +742,7 @@ function PageIndicator({
         }}
         inputMode="numeric"
         aria-label={`Page ${currentPage} of ${pageCount}. Type a page number to jump.`}
-        className="tnum w-[2.4rem] rounded-md border border-transparent bg-transparent px-1 py-0.5 text-right text-[13px] font-medium text-[var(--accent)] transition-colors duration-300 hover:border-[var(--border-subtle)] focus:border-[var(--border-subtle)] focus:outline-none"
+        className="tnum w-[2.4rem] rounded-md border border-transparent bg-transparent px-1 py-0.5 text-right text-[13px] font-medium text-[var(--text-primary)] transition-colors duration-300 hover:border-[var(--border-subtle)] focus:border-[var(--border-subtle)] focus:outline-none"
         style={{ transitionTimingFunction: 'var(--ease-namu)' }}
       />
       <span className="tnum select-none text-[12px] text-[var(--text-muted)]" aria-hidden="true">

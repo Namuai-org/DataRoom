@@ -61,8 +61,8 @@ export default async function QuestionsPage() {
                     style={
                       thread.status === 'answered'
                         ? {
-                            background: 'color-mix(in oklab, var(--accent) 16%, transparent)',
-                            color: 'var(--accent)',
+                            background: 'var(--field-warm)',
+                            color: 'var(--tag)',
                           }
                         : { background: 'var(--surface-sunken)', color: 'var(--text-muted)' }
                     }
@@ -79,7 +79,7 @@ export default async function QuestionsPage() {
                 {thread.answer && (
                   <div
                     className="mt-4 border-l-2 pl-4 text-[14px] leading-relaxed"
-                    style={{ borderColor: 'var(--accent)', color: 'var(--text-secondary)' }}
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}
                   >
                     {thread.answer}
                     {thread.answeredAt && (

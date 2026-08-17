@@ -17,7 +17,7 @@ export function NdaForm({ suggestedName }: { suggestedName: string }) {
           required
           autoComplete="name"
           placeholder="Your full name"
-          className="rounded-xl border px-4 py-3 text-[15px] outline-none transition-colors duration-300 focus:border-[var(--accent)]"
+          className="rounded-xl border px-4 py-3 text-[15px] outline-none transition-colors duration-300 focus:border-[var(--border-strong)]"
           style={{
             borderColor: 'var(--border-subtle)',
             background: 'var(--surface-raised)',
@@ -32,7 +32,7 @@ export function NdaForm({ suggestedName }: { suggestedName: string }) {
           type="checkbox"
           name="agreed"
           required
-          className="mt-0.5 h-4 w-4 flex-none accent-[var(--accent)]"
+          className="mt-0.5 h-4 w-4 flex-none accent-[var(--read-mark)]"
         />
         <span className="text-[13.5px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
           I have read the terms above and accept them on my own behalf and on behalf of the
@@ -44,7 +44,7 @@ export function NdaForm({ suggestedName }: { suggestedName: string }) {
         <p
           className="rounded-lg px-3 py-2 text-[13px]"
           style={{
-            background: 'color-mix(in oklab, var(--accent) 14%, transparent)',
+            background: 'var(--field-warm)',
             color: 'var(--text-primary)',
           }}
           role="alert"

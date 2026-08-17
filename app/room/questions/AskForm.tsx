@@ -51,7 +51,7 @@ export function AskForm({ documentId }: { documentId?: string }) {
             ? 'What would you like to know?'
             : 'What document would you like us to add?'
         }
-        className="resize-y rounded-xl border px-4 py-3 text-[14.5px] leading-relaxed outline-none transition-colors duration-300 focus:border-[var(--accent)]"
+        className="resize-y rounded-xl border px-4 py-3 text-[14.5px] leading-relaxed outline-none transition-colors duration-300 focus:border-[var(--border-strong)]"
         style={{
           borderColor: 'var(--border-subtle)',
           background: 'var(--surface)',
@@ -60,7 +60,7 @@ export function AskForm({ documentId }: { documentId?: string }) {
       />
 
       {state.error && (
-        <p className="text-[13px]" role="alert" style={{ color: 'var(--accent)' }}>
+        <p className="text-[13px]" role="alert" style={{ color: 'var(--tag)' }}>
           {state.error}
         </p>
       )}

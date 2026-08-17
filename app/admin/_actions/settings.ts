@@ -27,6 +27,7 @@ const settingsSchema = z.object({
   defaultCanDownload: z.boolean(),
   alertEmail: z.union([z.email('That alert address is not a valid email.'), z.literal('')]),
   qaEnabled: z.boolean(),
+  showSealedCount: z.boolean(),
 })
 
 function checkbox(formData: FormData, name: string): boolean {
@@ -48,6 +49,7 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
       defaultCanDownload: checkbox(formData, 'defaultCanDownload'),
       alertEmail: String(formData.get('alertEmail') ?? '').trim(),
       qaEnabled: checkbox(formData, 'qaEnabled'),
+      showSealedCount: checkbox(formData, 'showSealedCount'),
     })
 
     if (!parsed.success) {

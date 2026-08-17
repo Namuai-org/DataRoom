@@ -23,6 +23,7 @@ export const SETTINGS_KEYS = {
   defaultCanDownload: 'default_can_download',
   alertEmail: 'alert_email',
   qaEnabled: 'qa_enabled',
+  showSealedCount: 'show_sealed_count',
 } as const
 
 // The shape lives in _lib/view-types.ts, which carries no `server-only` marker,
@@ -44,7 +45,13 @@ a regulator, you will tell us first if you are lawfully able to.`
 
 export const DEFAULT_SETTINGS: RoomSettings = {
   roomTitle: `${brand.name} — Data Room`,
-  welcomeMessage: `${brand.descriptor}. Everything here is confidential and prepared for a small number of readers. Take your time.`,
+  welcomeMessage:
+    'Most Hausa speakers will reach AI by talking, not typing, and today’s systems barely hear ' +
+    'them. Namu is an African AI research and technology company closing that gap. Our first ' +
+    'product, Kura, answers phone calls in Hausa. In Niger, 240 pilot users have made more than ' +
+    '1,400 calls to it. This room is the record behind that work: the product, the numbers, the ' +
+    'risks. It is confidential, prepared for a few readers. Questions reach us directly, and we ' +
+    'answer them.',
   ndaEnabled: true,
   ndaVersion: 'v1.0',
   ndaText: DEFAULT_NDA_TEXT,
@@ -52,6 +59,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   defaultCanDownload: false,
   alertEmail: '',
   qaEnabled: true,
+  showSealedCount: false,
 }
 
 const stringValue = z.string()
@@ -94,6 +102,10 @@ export async function readSettings(): Promise<RoomSettings> {
     ),
     alertEmail: readString(map.get(SETTINGS_KEYS.alertEmail), DEFAULT_SETTINGS.alertEmail),
     qaEnabled: readBool(map.get(SETTINGS_KEYS.qaEnabled), DEFAULT_SETTINGS.qaEnabled),
+    showSealedCount: readBool(
+      map.get(SETTINGS_KEYS.showSealedCount),
+      DEFAULT_SETTINGS.showSealedCount,
+    ),
   }
 }
 

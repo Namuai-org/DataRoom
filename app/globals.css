@@ -37,6 +37,13 @@
   --ease-namu: cubic-bezier(0.22, 1, 0.36, 1);
 
   --radius-card: 14px;
+  /* The room is a printed object: edges are cut, not rounded. */
+  --radius-sheet: 2px;
+
+  /* Sahel darkened for use as a rule in the light theme. #E8935A measures
+     2.12:1 on Harmattan and --color-sahel-deep 2.80:1 — both under the 3:1
+     that WCAG 1.4.11 requires of a non-text indicator. This measures 3.25:1. */
+  --color-sahel-ink: #c4702f;
 }
 
 /* ==========================================================================
@@ -55,6 +62,22 @@
   --accent: var(--color-sahel);
   --shadow-card: 0 1px 2px rgb(28 20 16 / 0.04), 0 8px 24px -12px rgb(28 20 16 / 0.12);
   --shadow-lift: 0 2px 4px rgb(28 20 16 / 0.05), 0 18px 44px -18px rgb(28 20 16 / 0.22);
+
+  /* --- the printed room ------------------------------------------------ */
+  --rule-masthead: var(--color-ink-900);
+  --rule-ghost: color-mix(in oklab, var(--color-ink) 16%, transparent);
+  /* Dry Clay as a quiet field rather than a fill. This is what carries the
+     brand board's 12% Dry Clay, on screen at load rather than only on hover. */
+  --field-warm: color-mix(in oklab, var(--color-dry-clay) 46%, var(--surface));
+  --read-mark: var(--color-sahel-ink);
+  --read-track: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  --tag: var(--color-kola); /* 7.97:1 on Harmattan */
+  --complete: var(--color-forest); /* 10.98:1 on Harmattan */
+
+  --margin-col: 4.5rem;
+  --measure: 34rem;
+  --sheet: 54rem;
+
   color-scheme: light;
 }
 
@@ -70,6 +93,16 @@
   --accent: var(--color-sahel);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
   --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 18px 44px -18px rgb(0 0 0 / 0.6);
+
+  /* --- the printed room ------------------------------------------------ */
+  --rule-masthead: color-mix(in oklab, var(--color-harmattan-200) 70%, transparent);
+  --rule-ghost: color-mix(in oklab, var(--color-harmattan-200) 20%, transparent);
+  --field-warm: color-mix(in oklab, var(--color-forest) 30%, var(--surface-raised));
+  --read-mark: var(--color-sahel); /* 7.67:1 on Ink — correct unmodified here */
+  --read-track: color-mix(in oklab, var(--color-harmattan) 16%, transparent);
+  --tag: var(--color-dry-clay); /* Kola is invisible on Ink; this is 13.3:1 */
+  --complete: #7fb39a; /* Forest on Ink is 1.46:1; this is Forest lifted, 7.73:1 */
+
   color-scheme: dark;
 }
 
@@ -152,9 +185,11 @@ body {
   text-wrap: pretty;
 }
 
-/* Tabular figures keep analytics columns from jittering as numbers change. */
+/* Tabular figures keep analytics columns from jittering as numbers change.
+   Lining as well as tabular: Playfair ships oldstyle figures in some webfont
+   builds, and every numeral column in the room has to share a baseline. */
 .tnum {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 /* ==========================================================================
@@ -196,6 +231,183 @@ body {
     var(--border-subtle) 60%,
     transparent
   );
+}
+
+/* ==========================================================================
+   The printed room
+   A small vocabulary — rules, leaders, folios, decks — shared by the room
+   index, every section, and the document viewer. Deliberately no cards, no
+   shadows and no hover lifts: the brand board asks for quiet fields and
+   generous margins, and this is that instruction expressed as CSS.
+   ========================================================================== */
+
+.rule-masthead {
+  height: 2px;
+  background: var(--rule-masthead);
+  transform-origin: left;
+  animation: namu-draw-x 0.62s var(--ease-namu) both;
+}
+
+@keyframes namu-draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Dotted leader between a title and its page number, as in a table of
+   contents. An empty block's baseline is its bottom margin edge, so
+   align-self: baseline lands it on the type baseline with no nudging. */
+.leader {
+  display: block;
+  height: 1px;
+  align-self: baseline;
+  background-image: linear-gradient(to right, var(--border-subtle) 1.5px, transparent 1.5px);
+  background-size: 6px 1px;
+  background-repeat: repeat-x;
+  transition: background-image 0.24s var(--ease-namu);
+}
+.group:hover .leader,
+.group:focus-within .leader {
+  background-image: linear-gradient(to right, var(--border-strong) 1.5px, transparent 1.5px);
+}
+
+/* The accession number — "04.03" — hanging in the margin. */
+.folio {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--text-muted);
+  transition: color 0.24s var(--ease-namu);
+}
+.group:hover .folio,
+.group:focus-within .folio {
+  color: var(--text-primary);
+}
+
+.rule-v {
+  display: inline-block;
+  width: 1px;
+  height: 0.85em;
+  background: var(--border-strong);
+  vertical-align: -0.06em;
+  flex: none;
+}
+
+/* The fact strip: dateline, section colophon, document deck, viewer foot.
+   Separators are pseudo-elements on each segment rather than free-standing
+   spans, so a wrap never strands a rule at the end of a line. */
+.deck {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.deck > * + *::before {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 0.85em;
+  background: var(--border-strong);
+  margin: 0 0.65rem;
+  vertical-align: -0.08em;
+}
+
+/* The room's only Sahel form: how far through a document you are.
+   Never a link colour, a button, a pill, a badge, a tag or a count. */
+.read-mark {
+  display: block;
+  width: 28px;
+  height: 2px;
+  background: var(--read-track);
+  overflow: hidden;
+}
+.read-mark > i {
+  display: block;
+  height: 100%;
+  width: calc(var(--read, 0) * 100%);
+  min-width: 4px;
+  background: var(--read-mark);
+  transform-origin: left;
+  animation: namu-draw-x 0.7s 0.2s var(--ease-namu) both;
+}
+.read-mark[data-state='unread'] > i {
+  display: none;
+}
+/* The leading-edge tick on the one entry you should open next, so a first
+   visit is never entirely cold without resorting to decoration. */
+.read-mark[data-state='next'] > i {
+  width: 4px;
+}
+
+/* Replaces .stagger inside the room. Two reasons: a 10px lift makes a ruled
+   column visibly jitter as the hairlines settle, and .stagger's nth-child
+   ladder stops at 10 while one section holds 14 entries — items 11-14 fire
+   ahead of items 1-10. .stagger stays for /admin, which depends on it. */
+.set-in > * {
+  animation: namu-set 0.48s var(--ease-namu) both;
+  animation-delay: calc(min(var(--i, 0), 12) * 34ms);
+}
+
+@keyframes namu-set {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* An editorial underline: absent until hovered, then a hairline well clear
+   of the descenders. */
+.link-ed {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.24s var(--ease-namu);
+}
+.group:hover .link-ed,
+.group:focus-within .link-ed {
+  text-decoration-color: var(--border-strong);
+}
+
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .chev {
+  rotate: 180deg;
+}
+.chev {
+  transition: rotate 0.24s var(--ease-namu);
+}
+
+/* On touch, hover never fires, and a ruled row with no cues may not read as a
+   link at all. */
+.register-arrow {
+  opacity: 0;
+  transition: opacity 0.24s var(--ease-namu);
+}
+@media (hover: none) {
+  .register-arrow {
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================

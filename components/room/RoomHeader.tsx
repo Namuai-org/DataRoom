@@ -82,7 +82,7 @@ export function RoomHeader({
           <div
             className="relative flex w-full max-w-xs items-center rounded-full border transition-all duration-300"
             style={{
-              borderColor: focused ? 'var(--accent)' : 'var(--border-subtle)',
+              borderColor: focused ? 'var(--border-strong)' : 'var(--border-subtle)',
               background: 'var(--surface-raised)',
             }}
           >
@@ -129,7 +129,7 @@ export function RoomHeader({
             href="/room/questions"
             className="relative hidden h-9 w-9 flex-none place-items-center rounded-full border transition-colors duration-300 hover:bg-[var(--surface-sunken)] sm:grid"
             style={{
-              borderColor: pathname === '/room/questions' ? 'var(--accent)' : 'var(--border-subtle)',
+              borderColor: pathname === '/room/questions' ? 'var(--border-strong)' : 'var(--border-subtle)',
               color: 'var(--text-secondary)',
             }}
             aria-label="Questions"
@@ -138,7 +138,7 @@ export function RoomHeader({
             {openQuestionCount > 0 && (
               <span
                 className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[9px] font-semibold"
-                style={{ background: 'var(--accent)', color: '#1C1410' }}
+                style={{ background: 'var(--field-warm)', color: 'var(--text-primary)' }}
               >
                 {openQuestionCount}
               </span>
